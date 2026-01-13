@@ -8,13 +8,18 @@ import type { User } from "./UserGrid.interface";
 import type { ColDef } from "ag-grid-community";
 import axios from "axios";
 import { GridThemeQuartz } from "../../constants/GridTheme";
+import CountryRenderer from "../Country/CountryRenderer";
+import useViewportSize from "../../hooks/useViewportSize";
 
 const UserGrid: React.FC = () => {
+	const { width } = useViewportSize();
+
 	const [rowData, setRowData] = useState<User[]>([]);
 	const [colDefs] = useState<ColDef<User>[]>([
 		{ field: "id" },
 		{ field: "name", filter: true },
 		{ field: "company", filter: true },
+		{ field: "country", cellRenderer: CountryRenderer, filter: true },
 		{ field: "mobile" },
 	]);
 
@@ -22,10 +27,18 @@ const UserGrid: React.FC = () => {
 		axios.get("/users").then((response) => setRowData(response.data));
 	}, []);
 
+	if (width < 500) {
+		return (
+			<div className="h-screen w-full flex items-center justify-center bg-gray-700">
+				<div className="text-white font-bold">WE ARE CURRENTLY ON MOBILE !</div>
+			</div>
+		);
+	}
+
 	return (
 		<div className="h-screen w-full flex flex-col items-center justify-center bg-gray-700">
 			<div className="mt-5 text-white font-bold text-xl">USER DATA GRID</div>
-			<div className="w-210 h-190 bg-white rounded-xl shadow-lg">
+			<div className="w-255 h-190 bg-white rounded-xl shadow-lg">
 				<AgGridReact
 					theme={GridThemeQuartz}
 					rowData={rowData}
