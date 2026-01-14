@@ -100,3 +100,11 @@ export const mockUsersWithLongText = [
 		mobile: "+1-123-456-7890-ext-12345",
 	},
 ];
+
+export const mockLargeDataset = Array.from({ length: 100 }, (_, index) => ({
+	id: String(index + 1),
+	name: `User ${index + 1}`,
+	country: `Country ${index + 1}`,
+	company: `Company ${index + 1}`,
+	mobile: `${index + 1}-000-0000`,
+}));

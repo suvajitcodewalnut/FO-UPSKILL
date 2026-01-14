@@ -4,6 +4,7 @@ import UserGrid from "./UserGrid";
 import axios from "axios";
 import useViewportSize from "../../hooks/useViewportSize";
 import {
+	mockLargeDataset,
 	mockSingleUser,
 	mockThreeUsers,
 	mockUsers,
@@ -11,7 +12,7 @@ import {
 	mockUsersWithPaddedIds,
 	mockUsersWithSpecialChars,
 	mockUsersWithUnicode,
-} from "../../../tests/mocks/UserMock";
+} from "../../../tests/mocks/userMock";
 
 // Mock the viewport hook
 jest.mock("../../hooks/useViewportSize", () => ({
@@ -31,14 +32,6 @@ const mockedAxios = axios as jest.Mocked<typeof axios>;
 const mockedUseViewportSize = useViewportSize as jest.MockedFunction<
 	typeof useViewportSize
 >;
-
-const mockLargeDataset = Array.from({ length: 100 }, (_, index) => ({
-	id: String(index + 1),
-	name: `User ${index + 1}`,
-	country: `Country ${index + 1}`,
-	company: `Company ${index + 1}`,
-	mobile: `${index + 1}-000-0000`,
-}));
 
 const renderWithQueryClient = (component: React.ReactElement) => {
 	const queryClient = new QueryClient({
