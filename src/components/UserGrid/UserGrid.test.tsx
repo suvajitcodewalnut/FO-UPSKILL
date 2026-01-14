@@ -3,6 +3,15 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import UserGrid from "./UserGrid";
 import axios from "axios";
 import useViewportSize from "../../hooks/useViewportSize";
+import {
+	mockSingleUser,
+	mockThreeUsers,
+	mockUsers,
+	mockUsersWithLongText,
+	mockUsersWithPaddedIds,
+	mockUsersWithSpecialChars,
+	mockUsersWithUnicode,
+} from "../../../tests/mocks/UserMock";
 
 // Mock the viewport hook
 jest.mock("../../hooks/useViewportSize", () => ({
@@ -23,22 +32,13 @@ const mockedUseViewportSize = useViewportSize as jest.MockedFunction<
 	typeof useViewportSize
 >;
 
-const mockUsers = [
-	{
-		id: "1",
-		name: "John Doe",
-		country: "USA",
-		company: "Tech Corp",
-		mobile: "123-456-7890",
-	},
-	{
-		id: "2",
-		name: "Jane Smith",
-		country: "Canada",
-		company: "Dev Inc",
-		mobile: "098-765-4321",
-	},
-];
+const mockLargeDataset = Array.from({ length: 100 }, (_, index) => ({
+	id: String(index + 1),
+	name: `User ${index + 1}`,
+	country: `Country ${index + 1}`,
+	company: `Company ${index + 1}`,
+	mobile: `${index + 1}-000-0000`,
+}));
 
 const renderWithQueryClient = (component: React.ReactElement) => {
 	const queryClient = new QueryClient({
@@ -137,7 +137,6 @@ describe("UserGrid", () => {
 			expect(mockedAxios.get).toHaveBeenCalled();
 		});
 
-		// Component should still render the grid structure even on error
 		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
 	});
 
@@ -214,5 +213,208 @@ describe("UserGrid", () => {
 			const queryState = queryClient.getQueryState(["userDataGridInformation"]);
 			expect(queryState).toBeDefined();
 		});
+	});
+
+	it("should render correctly with a single user", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockSingleUser });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText(mockSingleUser[0].name)).toBeInTheDocument();
+		});
+
+		expect(screen.getByText(mockSingleUser[0].company)).toBeInTheDocument();
+		expect(screen.getByText(mockSingleUser[0].mobile)).toBeInTheDocument();
+	});
+
+	it("should handle users with special characters in their data", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersWithSpecialChars });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(
+				screen.getByText(mockUsersWithSpecialChars[0].name),
+			).toBeInTheDocument();
+		});
+
+		expect(
+			screen.getByText(mockUsersWithSpecialChars[1].name),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(mockUsersWithSpecialChars[0].company),
+		).toBeInTheDocument();
+		expect(
+			screen.getByText(mockUsersWithSpecialChars[1].company),
+		).toBeInTheDocument();
+	});
+
+	it("should handle users with unicode characters", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersWithUnicode });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(
+				screen.getByText(mockUsersWithUnicode[0].name),
+			).toBeInTheDocument();
+		});
+
+		expect(screen.getByText(mockUsersWithUnicode[1].name)).toBeInTheDocument();
+	});
+
+	it("should not fetch data when viewport is below 500", async () => {
+		mockedUseViewportSize.mockReturnValue({ width: 300, height: 768 });
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		renderWithQueryClient(<UserGrid />);
+
+		expect(
+			screen.getByText("WE ARE CURRENTLY ON DESKTOP !"),
+		).toBeInTheDocument();
+	});
+
+	it("should render mobile message at very small viewport width", () => {
+		mockedUseViewportSize.mockReturnValue({ width: 100, height: 400 });
+
+		renderWithQueryClient(<UserGrid />);
+
+		expect(
+			screen.getByText("WE ARE CURRENTLY ON DESKTOP !"),
+		).toBeInTheDocument();
+	});
+
+	it("should handle large dataset", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockLargeDataset });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText(mockLargeDataset[0].name)).toBeInTheDocument();
+		});
+	});
+
+	it("should render CountryRenderer for each user row", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockThreeUsers });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			const countryRenderers = screen.getAllByTestId("country-renderer");
+			expect(countryRenderers).toHaveLength(mockThreeUsers.length);
+		});
+	});
+
+	it("should handle users with numeric IDs as strings", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersWithPaddedIds });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(
+				screen.getByText(mockUsersWithPaddedIds[0].id),
+			).toBeInTheDocument();
+		});
+
+		expect(screen.getByText(mockUsersWithPaddedIds[1].id)).toBeInTheDocument();
+	});
+
+	it("should maintain grid structure with no rows when data is empty", async () => {
+		mockedAxios.get.mockResolvedValue({ data: [] });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("ID")).toBeInTheDocument();
+		});
+
+		expect(screen.getByText("NAME")).toBeInTheDocument();
+		expect(screen.getByText("COMPANY")).toBeInTheDocument();
+		expect(screen.getByText("COUNTRY")).toBeInTheDocument();
+		expect(screen.getByText("MOBILE")).toBeInTheDocument();
+	});
+
+	it("should render grid heading as expected", () => {
+		renderWithQueryClient(<UserGrid />);
+
+		const heading = screen.getByText("USER DATA GRID");
+		expect(heading).toBeInTheDocument();
+	});
+
+	it("should not render grid content on mobile viewport", () => {
+		mockedUseViewportSize.mockReturnValue({ width: 400, height: 600 });
+
+		renderWithQueryClient(<UserGrid />);
+
+		expect(screen.queryByText("ID")).not.toBeInTheDocument();
+		expect(screen.queryByText("NAME")).not.toBeInTheDocument();
+		expect(screen.queryByText("COMPANY")).not.toBeInTheDocument();
+	});
+
+	it("should handle viewport at exact boundary of 499", () => {
+		mockedUseViewportSize.mockReturnValue({ width: 499, height: 768 });
+
+		renderWithQueryClient(<UserGrid />);
+
+		expect(
+			screen.getByText("WE ARE CURRENTLY ON DESKTOP !"),
+		).toBeInTheDocument();
+		expect(screen.queryByText("USER DATA GRID")).not.toBeInTheDocument();
+	});
+
+	it("should handle viewport at exact boundary of 501", () => {
+		mockedUseViewportSize.mockReturnValue({ width: 501, height: 768 });
+
+		renderWithQueryClient(<UserGrid />);
+
+		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
+		expect(
+			screen.queryByText("WE ARE CURRENTLY ON DESKTOP !"),
+		).not.toBeInTheDocument();
+	});
+
+	it("should handle users with long text values", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersWithLongText });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(
+				screen.getByText(mockUsersWithLongText[0].name),
+			).toBeInTheDocument();
+		});
+	});
+
+	it("should handle different HTTP error codes gracefully", async () => {
+		const error = new Error("Request failed") as Error & {
+			response?: { status: number };
+		};
+		error.response = { status: 500 };
+		mockedAxios.get.mockRejectedValue(error);
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(mockedAxios.get).toHaveBeenCalled();
+		});
+
+		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
+	});
+
+	it("should handle 404 error gracefully", async () => {
+		const error = new Error("Not found") as Error & {
+			response?: { status: number };
+		};
+		error.response = { status: 404 };
+		mockedAxios.get.mockRejectedValue(error);
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(mockedAxios.get).toHaveBeenCalled();
+		});
+
+		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
 	});
 });
