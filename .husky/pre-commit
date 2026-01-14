@@ -1,1 +1,2 @@
 bun run application:build
+bun run application:format
