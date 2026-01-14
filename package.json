@@ -9,7 +9,8 @@
 		"application:build": "tsc -b && vite build",
 		"application:format": "biome format --write",
 		"application:preview": "vite preview",
-		"application:serve": "concurrently \"bun run client:serve\" \"bun run database:serve\""
+		"application:serve": "concurrently \"bun run client:serve\" \"bun run database:serve\"",
+		"prepare": "husky"
 	},
 	"dependencies": {
 		"@tailwindcss/vite": "^4.1.18",
@@ -19,6 +20,7 @@
 		"axios": "^1.13.2",
 		"concurrently": "^9.2.1",
 		"flag-icons": "^7.5.0",
+		"husky": "^9.1.7",
 		"json-server": "^1.0.0-beta.3",
 		"nanoid": "^5.1.6",
 		"react": "^19.2.0",
