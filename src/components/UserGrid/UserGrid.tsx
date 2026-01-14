@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 ModuleRegistry.registerModules([AllCommunityModule]);
@@ -10,11 +10,16 @@ import axios from "axios";
 import { GridThemeQuartz } from "../../constants/GridTheme";
 import CountryRenderer from "../Country/CountryRenderer";
 import useViewportSize from "../../hooks/useViewportSize";
+import { useQuery } from "@tanstack/react-query";
 
 const UserGrid: React.FC = () => {
 	const { width } = useViewportSize();
 
-	const [rowData, setRowData] = useState<User[]>([]);
+	const { data = [] } = useQuery<User[]>({
+		queryKey: ["userDataGridInformation"],
+		queryFn: () => axios.get("/users").then((response) => response.data),
+	});
+
 	const [colDefs] = useState<ColDef<User>[]>([
 		{
 			headerName: "ID",
@@ -47,10 +52,6 @@ const UserGrid: React.FC = () => {
 		},
 	]);
 
-	useEffect(() => {
-		axios.get("/users").then((response) => setRowData(response.data));
-	}, []);
-
 	if (width < 500) {
 		return (
 			<div className="h-screen w-full flex items-center justify-center bg-gray-700">
@@ -67,7 +68,7 @@ const UserGrid: React.FC = () => {
 			<div className="w-255 h-190 bg-white rounded-xl shadow-lg">
 				<AgGridReact
 					theme={GridThemeQuartz}
-					rowData={rowData}
+					rowData={data}
 					columnDefs={colDefs}
 					className="h-full w-full"
 				/>
