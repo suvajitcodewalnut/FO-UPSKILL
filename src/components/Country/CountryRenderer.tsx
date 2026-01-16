@@ -1,13 +1,14 @@
+import { memo } from "react";
 import type { CustomCellRendererProps } from "ag-grid-react";
 
-const CountryRenderer: React.FC<CustomCellRendererProps> = (
-	props: CustomCellRendererProps,
-) => {
-	return (
-		<span>
-			<i className={`fi fi-${props.value.flag}`}></i> {props.value.name}
-		</span>
-	);
-};
+const CountryRenderer: React.FC<CustomCellRendererProps> = memo(
+	(props: CustomCellRendererProps) => {
+		return (
+			<span>
+				<i className={`fi fi-${props.value.flag}`}></i> {props.value.name}
+			</span>
+		);
+	},
+);
 
 export default CountryRenderer;

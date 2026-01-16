@@ -1,16 +1,17 @@
-import { useState } from "react";
+import { useCallback, useMemo } from "react";
 
 import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 ModuleRegistry.registerModules([AllCommunityModule]);
 import { AgGridReact } from "ag-grid-react";
 
 import type { User } from "./UserGrid.interface";
-import type { ColDef } from "ag-grid-community";
+import type { ColDef, GetRowIdParams } from "ag-grid-community";
 import axios from "axios";
 import { GridThemeQuartz } from "../../constants/GridTheme";
-import CountryRenderer from "../Country/CountryRenderer";
 import useViewportSize from "../../hooks/useViewportSize";
 import { useQuery } from "@tanstack/react-query";
+import { columnDefs } from "../../constants/ColDefs";
+
 
 const UserGrid: React.FC = () => {
 	const { width } = useViewportSize();
@@ -20,37 +21,19 @@ const UserGrid: React.FC = () => {
 		queryFn: () => axios.get("/users").then((response) => response.data),
 	});
 
-	const [colDefs] = useState<ColDef<User>[]>([
-		{
-			headerName: "ID",
-			field: "id",
-			headerTooltip: "Unique identifier assigned to each user",
-		},
-		{
-			headerName: "NAME",
-			field: "name",
+	const defaultColDef = useMemo<ColDef<User>>(
+		() => ({
 			filter: true,
-			headerTooltip: "Full name of the user",
-		},
-		{
-			headerName: "COMPANY",
-			field: "company",
-			filter: true,
-			headerTooltip: "Company or organization the user is associated with",
-		},
-		{
-			headerName: "COUNTRY",
-			field: "country",
-			cellRenderer: CountryRenderer,
-			filter: true,
-			headerTooltip: "Country where the user is located",
-		},
-		{
-			headerName: "MOBILE",
-			field: "mobile",
-			headerTooltip: "User’s registered mobile phone number",
-		},
-	]);
+			sortable: true,
+			resizable: true,
+		}),
+		[],
+	);
+
+	const getRowId = useCallback(
+		(params: GetRowIdParams<User>) => params.data.id,
+		[],
+	);
 
 	if (width < 500) {
 		return (
@@ -69,7 +52,12 @@ const UserGrid: React.FC = () => {
 				<AgGridReact
 					theme={GridThemeQuartz}
 					rowData={data}
-					columnDefs={colDefs}
+					columnDefs={columnDefs}
+					defaultColDef={defaultColDef}
+					getRowId={getRowId}
+					animateRows={true}
+					suppressCellFocus={true}
+					rowBuffer={10}
 					className="h-full w-full"
 				/>
 			</div>
