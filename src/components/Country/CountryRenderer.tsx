@@ -1,7 +1,7 @@
 import { memo } from "react";
 import type { CustomCellRendererProps } from "ag-grid-react";
 
-const CountryRenderer: React.FC<CustomCellRendererProps> = memo(
+const CountryRenderer = memo(
 	(props: CustomCellRendererProps) => {
 		return (
 			<span>
@@ -9,6 +9,9 @@ const CountryRenderer: React.FC<CustomCellRendererProps> = memo(
 			</span>
 		);
 	},
+	(prevProps, nextProps) =>
+		prevProps.value?.flag === nextProps.value?.flag &&
+		prevProps.value?.name === nextProps.value?.name,
 );
 
 export default CountryRenderer;

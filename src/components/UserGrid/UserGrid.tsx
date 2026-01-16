@@ -55,7 +55,7 @@ const UserGrid: React.FC = () => {
 					columnDefs={columnDefs}
 					defaultColDef={defaultColDef}
 					getRowId={getRowId}
-					animateRows={true}
+					animateRows={false}
 					suppressCellFocus={true}
 					rowBuffer={10}
 					className="h-full w-full"
