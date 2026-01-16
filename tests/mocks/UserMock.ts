@@ -108,3 +108,58 @@ export const mockLargeDataset = Array.from({ length: 100 }, (_, index) => ({
 	company: `Company ${index + 1}`,
 	mobile: `${index + 1}-000-0000`,
 }));
+
+export const mockUsersForSorting = [
+	{
+		id: "3",
+		name: "Charlie Brown",
+		country: "UK",
+		company: "Zebra Inc",
+		mobile: "333-333-3333",
+	},
+	{
+		id: "1",
+		name: "Alice Johnson",
+		country: "USA",
+		company: "Alpha Corp",
+		mobile: "111-111-1111",
+	},
+	{
+		id: "2",
+		name: "Bob Smith",
+		country: "Canada",
+		company: "Beta Ltd",
+		mobile: "222-222-2222",
+	},
+];
+
+export const mockUsersForFiltering = [
+	{
+		id: "1",
+		name: "John Developer",
+		country: "USA",
+		company: "Tech Solutions",
+		mobile: "111-111-1111",
+	},
+	{
+		id: "2",
+		name: "Jane Designer",
+		country: "USA",
+		company: "Design Studio",
+		mobile: "222-222-2222",
+	},
+	{
+		id: "3",
+		name: "Bob Manager",
+		country: "Canada",
+		company: "Tech Solutions",
+		mobile: "333-333-3333",
+	},
+	{
+		id: "4",
+		name: "Alice Engineer",
+		country: "UK",
+		company: "Engineering Co",
+		mobile: "444-444-4444",
+	},
+];

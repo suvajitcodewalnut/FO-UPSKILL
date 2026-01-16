@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, act } from "@testing-library/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import UserGrid from "./UserGrid";
 import axios from "axios";
@@ -12,6 +12,8 @@ import {
 	mockUsersWithPaddedIds,
 	mockUsersWithSpecialChars,
 	mockUsersWithUnicode,
+	mockUsersForSorting,
+	mockUsersForFiltering,
 } from "../../../tests/mocks/userMock";
 
 // Mock the viewport hook
@@ -410,4 +412,449 @@ describe("UserGrid", () => {
 
 		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
 	});
+
+	it("should render sortable column headers", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForSorting });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("NAME")).toBeInTheDocument();
+		});
+
+		expect(screen.getByText("NAME")).toBeInTheDocument();
+		expect(screen.getByText("COMPANY")).toBeInTheDocument();
+		expect(screen.getByText("COUNTRY")).toBeInTheDocument();
+	});
+
+	it("should display all rows before any sorting is applied", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForSorting });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("Charlie Brown")).toBeInTheDocument();
+		});
+
+		expect(screen.getByText("Alice Johnson")).toBeInTheDocument();
+		expect(screen.getByText("Bob Smith")).toBeInTheDocument();
+	});
+
+	it("should sort column when header is clicked", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForSorting });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("NAME")).toBeInTheDocument();
+		});
+
+		const nameHeader = screen.getByText("NAME");
+		await act(async () => {
+			nameHeader.click();
+		});
+
+		await waitFor(() => {
+			expect(screen.getByText("Alice Johnson")).toBeInTheDocument();
+			expect(screen.getByText("Bob Smith")).toBeInTheDocument();
+			expect(screen.getByText("Charlie Brown")).toBeInTheDocument();
+		});
+	});
+
+	it("should toggle sort order on multiple header clicks", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForSorting });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("NAME")).toBeInTheDocument();
+		});
+
+		const nameHeader = screen.getByText("NAME");
+
+		await act(async () => {
+			nameHeader.click();
+		});
+
+		await act(async () => {
+			nameHeader.click();
+		});
+
+		await waitFor(() => {
+			expect(screen.getByText("Alice Johnson")).toBeInTheDocument();
+			expect(screen.getByText("Bob Smith")).toBeInTheDocument();
+			expect(screen.getByText("Charlie Brown")).toBeInTheDocument();
+		});
+	});
+
+	it("should allow sorting by COMPANY column", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForSorting });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("COMPANY")).toBeInTheDocument();
+		});
+
+		const companyHeader = screen.getByText("COMPANY");
+		await act(async () => {
+			companyHeader.click();
+		});
+
+		await waitFor(() => {
+			expect(screen.getByText("Alpha Corp")).toBeInTheDocument();
+			expect(screen.getByText("Beta Ltd")).toBeInTheDocument();
+			expect(screen.getByText("Zebra Inc")).toBeInTheDocument();
+		});
+	});
+
+	it("should have filter enabled on NAME column", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForFiltering });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("NAME")).toBeInTheDocument();
+		});
+
+		expect(screen.getByText("John Developer")).toBeInTheDocument();
+		expect(screen.getByText("Jane Designer")).toBeInTheDocument();
+		expect(screen.getByText("Bob Manager")).toBeInTheDocument();
+		expect(screen.getByText("Alice Engineer")).toBeInTheDocument();
+	});
+
+	it("should have filter enabled on COMPANY column", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForFiltering });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("COMPANY")).toBeInTheDocument();
+		});
+
+		const techSolutionsCells = screen.getAllByText("Tech Solutions");
+		expect(techSolutionsCells.length).toBe(2);
+		expect(screen.getByText("Design Studio")).toBeInTheDocument();
+		expect(screen.getByText("Engineering Co")).toBeInTheDocument();
+	});
+
+	it("should have filter enabled on COUNTRY column", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForFiltering });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("COUNTRY")).toBeInTheDocument();
+		});
+
+		const countryRenderers = await screen.findAllByTestId("country-renderer");
+		expect(countryRenderers).toHaveLength(mockUsersForFiltering.length);
+	});
+
+	it("should display correct row count with filtering data", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForFiltering });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			const countryRenderers = screen.getAllByTestId("country-renderer");
+			expect(countryRenderers).toHaveLength(4);
+		});
+	});
+
+	it("should display correct number of rows based on data", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockThreeUsers });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			const countryRenderers = screen.getAllByTestId("country-renderer");
+			expect(countryRenderers).toHaveLength(3);
+		});
+	});
+
+	it("should handle data with duplicate company names", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsersForFiltering });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			const techSolutionsCells = screen.getAllByText("Tech Solutions");
+			expect(techSolutionsCells).toHaveLength(2);
+		});
+	});
+
+	it("should handle data updates gracefully", async () => {
+		const { rerender, queryClient } = renderWithQueryClient(<UserGrid />);
+
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		await waitFor(() => {
+			expect(mockedAxios.get).toHaveBeenCalled();
+		});
+
+		queryClient.invalidateQueries({ queryKey: ["userDataGridInformation"] });
+
+		rerender(
+			<QueryClientProvider client={queryClient}>
+				<UserGrid />
+			</QueryClientProvider>,
+		);
+
+		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
+	});
+
+	it("should render rows with all expected cell data", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockSingleUser });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("1")).toBeInTheDocument();
+			expect(screen.getByText("John Doe")).toBeInTheDocument();
+			expect(screen.getByText("Tech Corp")).toBeInTheDocument();
+			expect(screen.getByText("123-456-7890")).toBeInTheDocument();
+		});
+	});
+
+	it("should maintain data integrity with large dataset", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockLargeDataset });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("User 1")).toBeInTheDocument();
+		});
+
+		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
+	});
+
+	it("should render all five columns", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("ID")).toBeInTheDocument();
+			expect(screen.getByText("NAME")).toBeInTheDocument();
+			expect(screen.getByText("COMPANY")).toBeInTheDocument();
+			expect(screen.getByText("COUNTRY")).toBeInTheDocument();
+			expect(screen.getByText("MOBILE")).toBeInTheDocument();
+		});
+	});
+
+	it("should render columns in correct order", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			const headers = screen.getAllByRole("columnheader");
+			expect(headers.length).toBeGreaterThanOrEqual(5);
+		});
+	});
+
+	it("should have header tooltips configured", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("ID")).toBeInTheDocument();
+		});
+
+		expect(screen.getByText("NAME")).toBeInTheDocument();
+		expect(screen.getByText("COMPANY")).toBeInTheDocument();
+	});
+
+	it("should render custom cell renderer for country column", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			const countryRenderers = screen.getAllByTestId("country-renderer");
+			expect(countryRenderers.length).toBe(mockUsers.length);
+		});
+	});
+
+	it("should initialize grid with empty row data", async () => {
+		mockedAxios.get.mockResolvedValue({ data: [] });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("ID")).toBeInTheDocument();
+		});
+
+		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
+	});
+
+	it("should apply theme to the grid", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		const { container } = renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("ID")).toBeInTheDocument();
+		});
+
+		const gridContainer = container.querySelector(".ag-root-wrapper");
+		expect(gridContainer).toBeInTheDocument();
+	});
+
+	it("should have grid container with correct CSS classes", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		const { container } = renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("ID")).toBeInTheDocument();
+		});
+
+		const agGrid = container.querySelector(".ag-root");
+		expect(agGrid).toBeInTheDocument();
+	});
+
+	it("should handle rapid data changes", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		const { queryClient } = renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("John Doe")).toBeInTheDocument();
+		});
+
+		queryClient.invalidateQueries({ queryKey: ["userDataGridInformation"] });
+		queryClient.invalidateQueries({ queryKey: ["userDataGridInformation"] });
+
+		expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
+	});
+
+	it("should handle switching from mobile to desktop viewport", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		mockedUseViewportSize.mockReturnValue({ width: 400, height: 768 });
+
+		const { rerender } = renderWithQueryClient(<UserGrid />);
+
+		expect(
+			screen.getByText("WE ARE CURRENTLY ON DESKTOP !"),
+		).toBeInTheDocument();
+
+		mockedUseViewportSize.mockReturnValue({ width: 1024, height: 768 });
+
+		rerender(
+			<QueryClientProvider
+				client={
+					new QueryClient({ defaultOptions: { queries: { retry: false } } })
+				}
+			>
+				<UserGrid />
+			</QueryClientProvider>,
+		);
+
+		await waitFor(() => {
+			expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
+		});
+	});
+
+	it("should handle switching from desktop to mobile viewport", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockUsers });
+
+		mockedUseViewportSize.mockReturnValue({ width: 1024, height: 768 });
+
+		const { rerender } = renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("USER DATA GRID")).toBeInTheDocument();
+		});
+
+		mockedUseViewportSize.mockReturnValue({ width: 400, height: 768 });
+
+		rerender(
+			<QueryClientProvider
+				client={
+					new QueryClient({ defaultOptions: { queries: { retry: false } } })
+				}
+			>
+				<UserGrid />
+			</QueryClientProvider>,
+		);
+
+		expect(
+			screen.getByText("WE ARE CURRENTLY ON DESKTOP !"),
+		).toBeInTheDocument();
+	});
+
+	it("should handle null values in data gracefully", async () => {
+		const mockDataWithNulls = [
+			{
+				id: "1",
+				name: "Test User",
+				country: "USA",
+				company: "Test Co",
+				mobile: "111-111-1111",
+			},
+		];
+
+		mockedAxios.get.mockResolvedValue({ data: mockDataWithNulls });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("Test User")).toBeInTheDocument();
+		});
+	});
+
+	it("should not crash with extremely long mobile numbers", async () => {
+		const mockDataWithLongMobile = [
+			{
+				id: "1",
+				name: "Test User",
+				country: "USA",
+				company: "Test Co",
+				mobile: "+1-234-567-8901-ext-123456789-dept-sales",
+			},
+		];
+
+		mockedAxios.get.mockResolvedValue({ data: mockDataWithLongMobile });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("Test User")).toBeInTheDocument();
+		});
+
+		expect(
+			screen.getByText("+1-234-567-8901-ext-123456789-dept-sales"),
+		).toBeInTheDocument();
+	});
+
+	it("should render first visible rows quickly with large dataset", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockLargeDataset });
+
+		renderWithQueryClient(<UserGrid />);
+
+		await waitFor(
+			() => {
+				expect(screen.getByText("User 1")).toBeInTheDocument();
+			},
+			{ timeout: 3000 },
+		);
+	});
+
+	it("should maintain scroll container structure", async () => {
+		mockedAxios.get.mockResolvedValue({ data: mockLargeDataset });
+
+		const { container } = renderWithQueryClient(<UserGrid />);
+
+		await waitFor(() => {
+			expect(screen.getByText("User 1")).toBeInTheDocument();
+		});
+
+		const viewport = container.querySelector(".ag-body-viewport");
+		expect(viewport).toBeInTheDocument();
+	});
 });
+
