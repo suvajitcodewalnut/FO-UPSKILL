@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import UserGrid from "./components/UserGrid/UserGrid";
+import UserGrid from "./components/SimpleGrid/SimpleGrid";
 import { ComplexGrid } from "./components/ComplexGrid";
 import { TabSwitcher, TabId } from "./components/TabSwitcher";
 import type { Tab } from "./components/TabSwitcher";

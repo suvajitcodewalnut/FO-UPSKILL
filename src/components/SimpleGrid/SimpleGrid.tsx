@@ -4,7 +4,7 @@ import { ModuleRegistry, AllCommunityModule } from "ag-grid-community";
 ModuleRegistry.registerModules([AllCommunityModule]);
 import { AgGridReact } from "ag-grid-react";
 
-import type { User } from "./UserGrid.interface";
+import type { User } from "./SimpleGrid.types";
 import type { ColDef } from "ag-grid-community";
 import axios from "axios";
 import { GridThemeQuartz } from "../../constants/GridTheme";
@@ -13,7 +13,7 @@ import useViewportSize from "../../hooks/useViewportSize";
 import { useQuery } from "@tanstack/react-query";
 import Loader from "../Loader/Loader";
 
-const UserGrid: React.FC = () => {
+const SimpleGrid: React.FC = () => {
 	const { width } = useViewportSize();
 
 	const {
@@ -104,4 +104,4 @@ const UserGrid: React.FC = () => {
 	);
 };
 
-export default UserGrid;
+export default SimpleGrid;
