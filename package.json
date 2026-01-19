@@ -25,6 +25,7 @@
 		"flag-icons": "^7.5.0",
 		"husky": "^9.1.7",
 		"json-server": "^1.0.0-beta.3",
+		"ldrs": "^1.1.9",
 		"nanoid": "^5.1.6",
 		"react": "^19.2.0",
 		"react-dom": "^19.2.0",
